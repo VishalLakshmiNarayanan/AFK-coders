@@ -203,34 +203,40 @@ if not st.session_state.logged_in:
         new_pass = st.text_input("Password", type="password")
         role = st.selectbox("Role", ["applicant", "recruiter"])
         if st.button("Sign Up"):
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            try:
-                cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-                               (new_user, hash_password(new_pass), role))
-                conn.commit()
-                st.success("✅ Account created!")
-            except:
-                st.error("Username already exists.")
-            conn.close()
+            if not new_user or not new_pass:
+                st.error("❌ Username and password cannot be empty.")
+            else:
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                                (new_user, hash_password(new_pass), role))
+                    conn.commit()
+                    st.success("✅ Account created!")
+                except:
+                    st.error("Username already exists.")
+                conn.close()
 
     elif choice == "Login":
         st.subheader("Login")
         user = st.text_input("Username")
         pwd = st.text_input("Password", type="password")
         if st.button("Login"):
-            conn = sqlite3.connect(DB_PATH)
-            cursor = conn.cursor()
-            cursor.execute("SELECT role FROM users WHERE username = ? AND password = ?", (user, hash_password(pwd)))
-            data = cursor.fetchone()
-            conn.close()
-            if data:
-                st.session_state.logged_in = True
-                st.session_state.username = user
-                st.session_state.role = data[0]
-                st.rerun()
+            if not user or not pwd:
+                st.error("❌ Please enter both username and password.")
             else:
-                st.error("Invalid credentials")
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute("SELECT role FROM users WHERE username = ? AND password = ?", (user, hash_password(pwd)))
+                data = cursor.fetchone()
+                conn.close()
+                if data:
+                    st.session_state.logged_in = True
+                    st.session_state.username = user
+                    st.session_state.role = data[0]
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials")
 
 else:
     st.sidebar.success(f"Logged in as: {st.session_state.username} ({st.session_state.role})")
